@@ -1,4 +1,4 @@
 cmake
-cairo-2
-cairo
-libcairo-2
+libcairo2-dev
+pkg-config
+python3-dev
