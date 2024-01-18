@@ -1,1 +1,4 @@
 cmake
+cairo-2
+cairo
+libcairo-2
