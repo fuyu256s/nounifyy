@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 import streamlit as st
 from PIL import Image
-from streamlit_drawable_canvas import st_canvas
+from streamlit_drawable_canvas import st_canvas, CanvasResult
 
 
 def main() -> None:
@@ -41,16 +41,10 @@ def main() -> None:
         )
 
 
-def _canvas(im: None | Image.Image) -> 'CanvasResult':
+def _canvas(im: None | Image.Image) -> CanvasResult:
     w_canvas = st.sidebar.number_input("canvas width", value=512)
     h_canvas = int(w_canvas * im.size[1] / im.size[0]) if im else w_canvas // 2
 
-    mode = st.sidebar.radio(
-        "mode",
-        ["line", "transform"],
-        format_func=lambda x: {"line": "draw", "transform": "move"}.get(x),
-        horizontal=True,
-    )
     col1, col2 = st.sidebar.columns([5, 1])
     with col1:
         stroke_width = st.slider("stroke", 1, 25, 5)
@@ -60,15 +54,14 @@ def _canvas(im: None | Image.Image) -> 'CanvasResult':
         )
 
     canvas_result = st_canvas(
-        fill_color="#eee",
         stroke_width=stroke_width,
         stroke_color=stroke_color,
-        background_color="#0000",
+        background_color="#000",
         background_image=im if im else None,
         update_streamlit=True,
         height=h_canvas,
         width=w_canvas,
-        drawing_mode=mode,
+        drawing_mode="freedraw",
         display_toolbar=True,
         key="canvas1" if im else "canvas0",
     )
@@ -79,12 +72,15 @@ def _get_noggle_place(i: int, obj: dict, d_noggles: dict):
     d = {"random": random.choice(list(d_noggles.values()))} | d_noggles
     st_type = st.sidebar.selectbox("type", d.keys(), key=f"type_{i}")
 
-    le, re = np.array((obj['x1'], obj['y1'])), np.array((obj['x2'], obj['y2']))
+    M, L = obj['path'][0], obj['path'][-1]
+    M_x, M_y, L_x, L_y = M[1], M[2], L[1], L[2]
+
+    le, re = np.array((M_x, M_y)), np.array((L_x, L_y))
     v = le - re
     angle = np.degrees(np.arctan2(v[0], v[1])) + 90
     factor = np.linalg.norm(v) / 7
     center = np.array((16.5, 13.5)) * factor
-    place = tuple((np.array((obj['left'], obj['top'])) - center).astype(int))
+    place = tuple((((le + re)/2) - center).astype(int))
 
     noggle = Image.open(d[st_type])
     noggle = noggle.resize(
