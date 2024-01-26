@@ -1,15 +1,23 @@
 import random
+from io import BytesIO
 from pathlib import Path
 from typing import IO
 
 import face_recognition
 import numpy as np
+import requests
 import streamlit as st
 from PIL import Image
 
 
 def main() -> None:
     file = st.file_uploader("Upload a file", type=['png', 'jpg'])
+    url = st.text_input("or enter a URL")
+
+    if url:
+        r = requests.get(url)
+        file = BytesIO(r.content)
+
     if file is not None:
         im = nounifyy(file)
         st.image(im)

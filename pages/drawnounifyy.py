@@ -1,16 +1,24 @@
 import base64
 import random
+from io import BytesIO
 from pathlib import Path
 
 import numpy as np
+import requests
 import streamlit as st
 from PIL import Image
-from streamlit_drawable_canvas import st_canvas, CanvasResult
+from streamlit_drawable_canvas import CanvasResult, st_canvas
 
 
 def main() -> None:
     file = st.file_uploader("Upload a file", type=['png', 'jpg'])
-    im = Image.open(file) if file is not None else None
+    url = st.text_input("or enter a URL")
+
+    if url:
+        r = requests.get(url)
+        file = BytesIO(r.content)
+
+    im = Image.open(file).convert('RGBA') if file is not None else None
     canvas_result = _canvas(im)
 
     d_noggles = {

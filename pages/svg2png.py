@@ -1,12 +1,22 @@
+import re
 from io import BytesIO
 
 import cairosvg
+import requests
 import streamlit as st
 from PIL import Image
 
 
 def main() -> None:
     file = st.file_uploader("Upload a file", type=['svg'])
+    url = st.text_input("or enter a URL")
+
+    if url:
+        r = requests.get(url)
+        file = BytesIO(r.content)
+        name = re.search(r'(?<=").*(?=")', r.headers.get('ETag')).group()
+        file.name = f"{name}.svg"
+
     if file is not None:
         png = cairosvg.svg2png(file_obj=file)
         im = Image.open(BytesIO(png))
