@@ -5,6 +5,7 @@ import cairosvg
 import requests
 import streamlit as st
 from PIL import Image
+from utils import st_dl_png
 
 
 def main() -> None:
@@ -28,18 +29,8 @@ def main() -> None:
         im = im.resize((st_w, st_h), Image.NEAREST)
         st.image(im, output_format='png')
 
-        buf = BytesIO()
-        im.save(buf, format='png')
-        byte_im = buf.getvalue()
-
         stem = "".join(file.name.split(".")[:-1])
-        st.download_button(
-            label="Download",
-            data=byte_im,
-            file_name=f"{stem}.png",
-            mime='image/png',
-            key='dl_sv2png',
-        )
+        st_dl_png(im, stem, "dl_svg2png")
 
 
 if __name__ == "__main__":

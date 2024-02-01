@@ -1,10 +1,9 @@
-import base64
 import random
-from io import BytesIO
 
 import numpy as np
 import streamlit as st
 from PIL import Image
+from utils import st_dl_gif, st_dl_png
 
 
 def main() -> None:
@@ -42,7 +41,7 @@ def main() -> None:
             with col2:
                 st_nrows = st.number_input("number of rows", value=4, min_value=1)
             st_nrepeat = st.number_input("repeat", value=10, min_value=1)
-            st_duration = st.sidebar.number_input("duration", value=200)
+            st_duration = st.number_input("duration (ms)", value=200)
 
     if st.button("Go", use_container_width=True):
         if not files:
@@ -61,39 +60,16 @@ def main() -> None:
             arr = np.stack(ims)
             im = Image.fromarray(_tile(arr, st_ncols))
             st.image(im)
+            st_dl_png(im, "output", "dl_tilepng")
 
         elif sw == "tile to random gif":
             _ims = []
-            for i in range(st_nrepeat):
+            for _ in range(st_nrepeat):
                 arr = np.stack(random.choices(ims, k=st_ncols * st_nrows))
                 im = Image.fromarray(_tile(arr, st_ncols))
                 _ims.append(im)
 
-            buf = BytesIO()
-            _ims[0].save(
-                buf,
-                format='gif',
-                save_all=True,
-                append_images=_ims[1:],
-                optimize=False,
-                duration=st_duration,
-                loop=0,
-            )
-            byte_im = buf.getvalue()
-
-            data_url = base64.b64encode(byte_im).decode('utf-8')
-            st.markdown(
-                f"<img src='data:image/gif;base64,{data_url}' alt='gif'>",
-                unsafe_allow_html=True,
-            )
-
-            st.download_button(
-                label="Download",
-                data=byte_im,
-                file_name=f"out.gif",
-                mime='image/gif',
-                key='dl_tilegif',
-            )
+            st_dl_gif(_ims, st_duration, "output", "dl_tilegif")
 
 
 def _tile(ims_arr: np.ndarray, ncols: int):

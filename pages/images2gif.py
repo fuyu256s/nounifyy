@@ -1,8 +1,6 @@
-import base64
-from io import BytesIO
-
 import streamlit as st
 from PIL import Image
+from utils import st_dl_gif
 
 
 def main() -> None:
@@ -12,32 +10,8 @@ def main() -> None:
     if files is not None:
         ims = [Image.open(file) for file in files]
         if ims:
-            st_duration = st.sidebar.number_input("duration", value=200)
-            buf = BytesIO()
-            ims[0].save(
-                buf,
-                format='gif',
-                save_all=True,
-                append_images=ims[1:],
-                optimize=False,
-                duration=st_duration,
-                loop=0,
-            )
-            byte_im = buf.getvalue()
-
-            data_url = base64.b64encode(byte_im).decode('utf-8')
-            st.markdown(
-                f"<img src='data:image/gif;base64,{data_url}' alt='gif'>",
-                unsafe_allow_html=True,
-            )
-
-            st.download_button(
-                label="Download",
-                data=byte_im,
-                file_name=f"out.gif",
-                mime='image/gif',
-                key='dl_images2gif',
-            )
+            st_duration = st.number_input("duration (ms)", value=200)
+            st_dl_gif(ims, st_duration, "output", 'dl_tilegif')
 
 
 if __name__ == "__main__":

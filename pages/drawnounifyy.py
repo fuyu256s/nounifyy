@@ -8,6 +8,7 @@ import requests
 import streamlit as st
 from PIL import Image
 from streamlit_drawable_canvas import CanvasResult, st_canvas
+from utils import st_dl_png
 
 
 def main() -> None:
@@ -39,14 +40,16 @@ def main() -> None:
             place, noggle = _get_noggle_place(i, obj, d_noggles)
             newim.paste(noggle, box=(place), mask=noggle)
 
-        st.image(newim)
-
         st.sidebar.button(
             "Random ⌐◨-◨",
             on_click=_random,
             args=(len(canvas_result.image_data),),
             use_container_width=True,
         )
+
+        st.image(newim)
+        stem = "".join(file.name.split(".")[:-1]) if file else ""
+        st_dl_png(newim, "nounified_" + stem, "dl_drawnounifyy")
 
 
 def _canvas(im: None | Image.Image) -> CanvasResult:
@@ -88,7 +91,7 @@ def _get_noggle_place(i: int, obj: dict, d_noggles: dict):
     angle = np.degrees(np.arctan2(v[0], v[1])) + 90
     factor = np.linalg.norm(v) / 7
     center = np.array((16.5, 13.5)) * factor
-    place = tuple((((le + re)/2) - center).astype(int))
+    place = tuple((((le + re) / 2) - center).astype(int))
 
     noggle = Image.open(d[st_type])
     noggle = noggle.resize(

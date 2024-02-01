@@ -8,6 +8,7 @@ import numpy as np
 import requests
 import streamlit as st
 from PIL import Image
+from utils import st_dl_png
 
 
 def main() -> None:
@@ -21,6 +22,8 @@ def main() -> None:
     if file is not None:
         im = nounifyy(file)
         st.image(im)
+        stem = "".join(file.name.split(".")[:-1])
+        st_dl_png(im, "nounified_" + stem, 'dl_sv2png')
     else:
         st.divider()
         st.write("Go to other tools:")
@@ -78,7 +81,7 @@ def nounifyy(file: IO | Path) -> Image:
         )
 
     else:
-        st.write("Face not recognized")
+        st.warning("Face not recognized", icon="ℹ️")
         newim = Image.fromarray(im)
 
     return newim
