@@ -31,6 +31,9 @@ def main() -> None:
         if sw == "just tile":
             ncols = np.sqrt(len(files)).astype(int) if len(files) > 1 else 1
             st_ncols = st.number_input("number of columns", value=ncols, min_value=1)
+            st_rand = st.checkbox("Shuffle")
+            if st_rand:
+                random.shuffle(files)
 
         elif sw == "tile to random gif":
             col1, col2 = st.columns(2)
