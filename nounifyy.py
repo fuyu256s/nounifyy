@@ -22,7 +22,7 @@ def main() -> None:
     if file is not None:
         im = nounifyy(file)
         st.image(im)
-        stem = "".join(file.name.split(".")[:-1])
+        stem = "" if url else "".join(file.name.split(".")[:-1])
         st_dl_png(im, "nounified_" + stem, 'dl_sv2png')
     else:
         st.divider()

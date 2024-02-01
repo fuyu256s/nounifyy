@@ -48,7 +48,7 @@ def main() -> None:
         )
 
         st.image(newim)
-        stem = "".join(file.name.split(".")[:-1]) if file else ""
+        stem = "".join(file.name.split(".")[:-1]) if file and not url else ""
         st_dl_png(newim, "nounified_" + stem, "dl_drawnounifyy")
 
 
