@@ -18,6 +18,7 @@ def main() -> None:
     if url:
         r = requests.get(url)
         file = BytesIO(r.content)
+        file.name = ""
 
     im = Image.open(file).convert('RGBA') if file is not None else None
     canvas_result = _canvas(im)
@@ -38,7 +39,8 @@ def main() -> None:
             st.sidebar.subheader(f"⌐◨-◨ {i + 1}")
 
             place, noggle = _get_noggle_place(i, obj, d_noggles)
-            newim.paste(noggle, box=(place), mask=noggle)
+            if place:
+                newim.paste(noggle, box=(place), mask=noggle)
 
         st.sidebar.button(
             "Random ⌐◨-◨",
@@ -53,7 +55,9 @@ def main() -> None:
 
 
 def _canvas(im: None | Image.Image) -> CanvasResult:
-    w_canvas = st.sidebar.number_input("canvas width", value=512)
+    w_canvas = st.sidebar.number_input(
+        "canvas width", value=512, min_value=1, max_value=4096
+    )
     h_canvas = int(w_canvas * im.size[1] / im.size[0]) if im else w_canvas // 2
 
     col1, col2 = st.sidebar.columns([5, 1])
@@ -81,7 +85,6 @@ def _canvas(im: None | Image.Image) -> CanvasResult:
 
 def _get_noggle_place(i: int, obj: dict, d_noggles: dict):
     d = {"random": random.choice(list(d_noggles.values()))} | d_noggles
-    st_type = st.sidebar.selectbox("type", d.keys(), key=f"type_{i}")
 
     M, L = obj['path'][0], obj['path'][-1]
     M_x, M_y, L_x, L_y = M[1], M[2], L[1], L[2]
@@ -90,9 +93,12 @@ def _get_noggle_place(i: int, obj: dict, d_noggles: dict):
     v = le - re
     angle = np.degrees(np.arctan2(v[0], v[1])) + 90
     factor = np.linalg.norm(v) / 7
+    if factor.astype(int) == 0:
+        return None, None
     center = np.array((16.5, 13.5)) * factor
     place = tuple((((le + re) / 2) - center).astype(int))
 
+    st_type = st.sidebar.selectbox("type", d.keys(), key=f"type_{i}")
     noggle = Image.open(d[st_type])
     noggle = noggle.resize(
         (np.array(noggle.size) * factor).astype(int), Image.NEAREST

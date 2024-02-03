@@ -7,9 +7,22 @@ from utils import st_dl_gif, st_dl_png
 
 
 def main() -> None:
+    if "file_uploader_key" not in st.session_state:
+        st.session_state["file_uploader_key"] = 0
+    if "uploaded_files" not in st.session_state:
+        st.session_state["uploaded_files"] = []
     files = st.file_uploader(
-        "Upload files", type=['png', 'jpg'], accept_multiple_files=True
+        "Upload files",
+        type=['png', 'jpg'],
+        accept_multiple_files=True,
+        key=st.session_state["file_uploader_key"],
     )
+    if files:
+        st.session_state["uploaded_files"] = files
+    if st.button("Clear"):
+        st.session_state["file_uploader_key"] += 1
+        st.rerun()
+
     sw = st.radio(
         "tile_or_tilegif",
         ["just tile", "tile to random gif"],
@@ -19,21 +32,13 @@ def main() -> None:
 
     if files:
         # def init
-        w, h = Image.open(files[0]).size
-        W_ = 160
-        if w > W_:
-            h = W_ * h // w
-            w = W_
-        st_cellw = st.sidebar.number_input("cell width", value=w, min_value=1)
-        st_cellh = st.sidebar.number_input("cell height", value=h, min_value=1)
-
         if sw == "just tile":
             ncols = np.sqrt(len(files)).astype(int) if len(files) > 1 else 1
             st_ncols = st.number_input("number of columns", value=ncols, min_value=1)
-            st_rand = st.checkbox("Shuffle")
-            if st_rand:
+            n = ncols * (len(files) // ncols + np.sign(len(files) % ncols))
+            st_nrows = n // st_ncols
+            if st.checkbox("Shuffle"):
                 random.shuffle(files)
-
         elif sw == "tile to random gif":
             col1, col2 = st.columns(2)
             with col1:
@@ -42,6 +47,44 @@ def main() -> None:
                 st_nrows = st.number_input("number of rows", value=4, min_value=1)
             st_nrepeat = st.number_input("repeat", value=10, min_value=1)
             st_duration = st.number_input("duration (ms)", value=200)
+
+        w, h = Image.open(files[0]).size
+
+        MAX_W = 160
+        if w > MAX_W:
+            h = MAX_W * h // w
+            w = MAX_W
+
+        TH = 4096
+        ww = w * st_ncols
+        hh = h * st_nrows
+        if ww > TH and hh > TH:
+            if ww > TH:
+                _w = TH // st_ncols
+                h = _w * h // w
+                w = _w
+            else:
+                _h = TH // st_nrows
+                w = _h * w // h
+                h = _h
+        elif ww > TH:
+            _w = TH // st_ncols
+            h = _w * h // w
+            w = _w
+        elif hh > TH:
+            _h = TH // st_nrows
+            w = _h * w // h
+            h = _h
+
+        st_cellw = st.sidebar.number_input("cell width", value=w, min_value=1)
+        st_cellh = st.sidebar.number_input("cell height", value=h, min_value=1)
+
+        if st_cellw * st_ncols >= TH:
+            st.warning("reduce cell width or number of columns")
+            return
+        elif st_cellh * st_nrows >= TH:
+            st.warning("reduce cell height or number of rows")
+            return
 
     if st.button("Go", use_container_width=True):
         if not files:

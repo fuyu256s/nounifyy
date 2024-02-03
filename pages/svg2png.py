@@ -23,8 +23,8 @@ def main() -> None:
         im = Image.open(BytesIO(png))
         w, h = im.size
 
-        st_w = st.sidebar.number_input("width", value=w)
-        st_h = st.sidebar.number_input("height", value=h)
+        st_w = st.sidebar.number_input("width", value=w, min_value=1, max_value=4096)
+        st_h = st.sidebar.number_input("height", value=h, min_value=1, max_value=4096)
 
         im = im.resize((st_w, st_h), Image.NEAREST)
         st.image(im, output_format='png')

@@ -18,6 +18,7 @@ def main() -> None:
     if url:
         r = requests.get(url)
         file = BytesIO(r.content)
+        file.name = ""
 
     if file is not None:
         im = nounifyy(file)
@@ -42,8 +43,8 @@ def nounifyy(file: IO | Path) -> Image:
         for x in Path("4-glasses").glob("*.png")
     }
 
-    im = face_recognition.load_image_file(file)
-    face_landmarks_list = face_recognition.face_landmarks(im)
+    arr = np.array(_reduce_im_size(Image.open(file).convert('RGB')))
+    face_landmarks_list = face_recognition.face_landmarks(arr)
     n = len(face_landmarks_list)
 
     init = {
@@ -54,7 +55,7 @@ def nounifyy(file: IO | Path) -> Image:
     angles = {}
 
     if face_landmarks_list:
-        newim = Image.fromarray(im)
+        newim = Image.fromarray(arr)
         for i, face_landmarks in enumerate(face_landmarks_list):
             st.sidebar.subheader(f"⌐◨-◨ {i + 1}")
 
@@ -65,7 +66,8 @@ def nounifyy(file: IO | Path) -> Image:
                 init,
                 angles,
             )
-            newim.paste(noggle, box=(place), mask=noggle)
+            if place:
+                newim.paste(noggle, box=(place), mask=noggle)
 
         st.sidebar.button(
             "Random ⌐◨-◨",
@@ -82,16 +84,38 @@ def nounifyy(file: IO | Path) -> Image:
 
     else:
         st.warning("Face not recognized", icon="ℹ️")
-        newim = Image.fromarray(im)
+        newim = Image.fromarray(arr)
 
     return newim
+
+
+def _reduce_im_size(im: Image.Image) -> Image.Image:
+    TH = 4096
+    w, h = im.size
+    if w > TH and h > TH:
+        if w > h:
+            new_w = TH
+            new_h = int(new_w * h / w)
+        elif h > w:
+            new_h = TH
+            new_w = int(new_h * w / h)
+        else:
+            new_w, new_h = TH, TH
+    elif w > TH:
+        new_w = TH
+        new_h = int(new_w * h / w)
+    elif h > TH:
+        new_h = TH
+        new_w = int(new_h * w / h)
+    else:
+        new_w, new_h = w, h
+    return im.resize((new_w, new_h))
 
 
 def _get_noggle_place(
     i: int, face_landmarks: dict, d_noggles: dict, init: dict, angles: dict
 ) -> (tuple[int, int], Image):
     d = {"random": random.choice(list(d_noggles.values()))} | d_noggles
-    st_type = st.sidebar.selectbox("type", d.keys(), key=f"type_{i}")
 
     le = np.mean(np.array(face_landmarks['left_eye']), axis=0).astype(int)
     re = np.mean(np.array(face_landmarks['right_eye']), axis=0).astype(int)
@@ -103,9 +127,12 @@ def _get_noggle_place(
     st_y = st.sidebar.slider("y", -1.0, 1.0, value=init['y'], key=f"y_{i}")
 
     factor = np.linalg.norm(v) / 7 * st_size
+    if factor.astype(int) == 0:
+        return None, None
     center = (np.array((16.5, 13.5)) - np.array((st_x, st_y)) * 3) * factor
     place = tuple((np.mean([le, re], axis=0) - center).astype(int))
 
+    st_type = st.sidebar.selectbox("type", d.keys(), key=f"type_{i}")
     noggle = Image.open(d[st_type])
     noggle = noggle.resize(
         (np.array(noggle.size) * factor).astype(int), Image.NEAREST
