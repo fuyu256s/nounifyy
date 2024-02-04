@@ -23,7 +23,7 @@ def main() -> None:
         st.session_state["file_uploader_key"] += 1
         st.rerun()
 
-    sw = st.radio(
+    st_sw = st.radio(
         "tile_or_tilegif",
         ["just tile", "tile to random gif"],
         horizontal=True,
@@ -32,14 +32,37 @@ def main() -> None:
 
     if files:
         # def init
-        if sw == "just tile":
+        if st_sw == "just tile":
+            st_tilemode = st.radio(
+                "tilehow",
+                ["in order", "shuffle", "random"],
+                horizontal=True,
+                label_visibility='collapsed',
+            )
+
             ncols = np.sqrt(len(files)).astype(int) if len(files) > 1 else 1
-            st_ncols = st.number_input("number of columns", value=ncols, min_value=1)
-            n = ncols * (len(files) // ncols + np.sign(len(files) % ncols))
-            st_nrows = n // st_ncols
-            if st.checkbox("Shuffle"):
-                random.shuffle(files)
-        elif sw == "tile to random gif":
+            tileall = st_tilemode in ["in order", "shuffle"]
+
+            col1, col2 = st.columns(2)
+            with col1:
+                st_ncols = st.number_input(
+                    "number of columns",
+                    value=ncols,
+                    min_value=1,
+                    max_value=len(files) if tileall else None,
+                )
+            with col2:
+                n = ncols * (len(files) // ncols + np.sign(len(files) % ncols))
+                st_nrows = n // st_ncols or 1
+
+                st_nrows = st.number_input(
+                    "number of rows",
+                    value=st_nrows,
+                    min_value=1,
+                    disabled=True if tileall else False,
+                )
+
+        elif st_sw == "tile to random gif":
             col1, col2 = st.columns(2)
             with col1:
                 st_ncols = st.number_input("number of columns", value=4, min_value=1)
@@ -98,17 +121,24 @@ def main() -> None:
             )
             for f in files
         ]
+        st_n = st_ncols * st_nrows
 
-        if sw == "just tile":
-            arr = np.stack(ims)
+        if st_sw == "just tile":
+            if st_tilemode == "in order":
+                arr = np.stack(ims)
+            elif st_tilemode == "shuffle":
+                random.shuffle(ims)
+                arr = np.stack(ims)
+            elif st_tilemode == "random":
+                arr = np.stack(random.choices(ims, k=st_n))
             im = Image.fromarray(_tile(arr, st_ncols))
             st.image(im)
             st_dl_png(im, "output", "dl_tilepng")
 
-        elif sw == "tile to random gif":
+        elif st_sw == "tile to random gif":
             _ims = []
             for _ in range(st_nrepeat):
-                arr = np.stack(random.choices(ims, k=st_ncols * st_nrows))
+                arr = np.stack(random.choices(ims, k=st_n))
                 im = Image.fromarray(_tile(arr, st_ncols))
                 _ims.append(im)
 
