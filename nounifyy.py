@@ -28,7 +28,7 @@ def main() -> None:
     else:
         st.divider()
         st.write("Go to other tools:")
-        pages = ['drawnounifyy', 'images2gif', 'svg2png']
+        pages = ['drawnounifyy', 'images2gif', 'svg2png', 'tileimages']
         cols = st.columns(len(pages))
         for col, page in zip(cols, pages):
             with col:
