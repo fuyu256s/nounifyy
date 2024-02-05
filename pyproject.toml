@@ -11,6 +11,7 @@ streamlit = "^1.30.0"
 cairosvg = "^2.7.1"
 face-recognition = {git = "https://github.com/thetoby9944/face_recognition.git"}
 streamlit-drawable-canvas = "0.8.0"
+stqdm = "^0.0.5"
 
 
 [build-system]
